@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "codefo",
+    "longName": "Interval",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "Interval",
+    "uuid": "4b36f44d-57bd-446e-b933-c7056e02f9d3",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
