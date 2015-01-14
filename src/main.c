@@ -17,28 +17,48 @@ static void update_time(int value) {
   text_layer_set_text(s_time_layer, buffer);
 }
 
-void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-  s_interval = s_interval - s_step;
+int calculate_step(uint8_t x) {
+  if (x > 15) return 15;
+  if (x > 10) return 10;
+  if (x > 5) return 5;
+
+  return 1;
+}
+
+int calculate_interval(int interval, int step) {
+  if (step == 1) {
+    return interval;
+  }
+
+  return interval / step * step;
+}
+
+void change_time_click_handler(ClickRecognizerRef recognizer, int flag) {
+  s_step = calculate_step(click_number_of_clicks_counted(recognizer));
+  s_interval = calculate_interval(s_interval, s_step) + flag * s_step;
   update_time(s_interval);
 }
 
-void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-  s_interval = s_interval + s_step;
-  update_time(s_interval);
+void down_single_click_handler(ClickRecognizerRef recognizer, void *c) {
+  change_time_click_handler(recognizer, -1);
+}
+
+void up_single_click_handler(ClickRecognizerRef recognizer, void *c) {
+  change_time_click_handler(recognizer, 1);
 }
 
 static void main_window_load(Window *window) {
-  s_time_layer = text_layer_create(GRect(0, 46, 144, 50));
+  s_time_layer = text_layer_create(GRect(4, 46, 144, 50));
 
   text_layer_set_background_color(s_time_layer, GColorClear);
   text_layer_set_text_color(s_time_layer, GColorBlack);
 
   text_layer_set_font(
     s_time_layer, 
-    fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD)
+    fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS)
   );
 
-  text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+  text_layer_set_text_alignment(s_time_layer, GTextAlignmentLeft);
 
   layer_add_child(
     window_get_root_layer(window), 
@@ -53,8 +73,17 @@ static void main_window_unload(Window *window) {
 }
 
 void config_provider(Window *window) {
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_single_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_single_click_handler);
+  window_single_repeating_click_subscribe(
+    BUTTON_ID_DOWN, 
+    400, 
+    down_single_click_handler
+  );
+
+  window_single_repeating_click_subscribe(
+    BUTTON_ID_UP, 
+    400, 
+    up_single_click_handler
+  );
 }
 
 static void init() {
