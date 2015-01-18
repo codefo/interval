@@ -6,6 +6,9 @@ static TextLayer *s_time_layer;
 static int s_interval = 0;
 static int s_step = 1;
 
+static bool is_countdown_started = false; 
+static int s_timer = 0;
+
 static void update_time(int value) {
   static char buffer[] = "00:00";
 
@@ -54,13 +57,45 @@ void up_single_click_handler(ClickRecognizerRef recognizer, void *c) {
   change_time_click_handler(recognizer, 1);
 }
 
-void select_single_click_handler(ClickRecognizerRef recognizer, void *c) {
+void vibe_end() {
   static const uint32_t const segments[] = { 500, 300, 500, 300, 500 };
-  VibePattern pat = {
-    .durations = segments,
-    .num_segments = ARRAY_LENGTH(segments),
-  };
-  vibes_enqueue_custom_pattern(pat);
+    VibePattern pattern = {
+      .durations = segments,
+      .num_segments = ARRAY_LENGTH(segments),
+    };
+    vibes_enqueue_custom_pattern(pattern);
+}
+
+void stop_timer() {
+  is_countdown_started = false;
+  tick_timer_service_unsubscribe();
+  update_time(s_interval);
+}
+
+void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+  s_timer -= 1;
+
+  if (s_timer) {
+    update_time(s_timer);
+  } else {
+    vibe_end();
+    stop_timer();
+  }
+}
+
+void start_timer() {
+  is_countdown_started = true;
+  s_timer = s_interval;
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+}
+
+void select_single_click_handler(ClickRecognizerRef recognizer, void *c) {
+  if (is_countdown_started) {
+    vibes_short_pulse();
+    stop_timer();
+  } else {
+    if (s_interval != 0) start_timer();
+  }
 }
 
 void config_provider(Window *window) {
